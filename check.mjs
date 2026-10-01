@@ -23,6 +23,7 @@ assert.equal(formatPrintf('%.1s','"中文"').bytes,1);
 assert.equal(formatPrintf('%s','"\\377"').bytes,1);
 assert.equal(formatPrintf('%d','1, 2').warnings.length,1);
 assert.deepEqual(highlightFormat('%+08.2lld'),[{text:'%',part:null},{text:'+0',part:'flags'},{text:'8',part:'width'},{text:'.2',part:'precision'},{text:'ll',part:'length'},{text:'d',part:'specifier'}]);
+assert.deepEqual(highlightFormat('hello %d'),[{text:'hello ',part:'literal'},{text:'%',part:null},{text:'d',part:'specifier'}]);
 for (const value of ['hello %d / %s','%','%+08.','%*.*f','%wf16u','%%','"中文 %s"']) assert.equal(highlightFormat(value).map(part => part.text).join(''),value);
 assert.equal(formatPrintf('%.10f','1.000000059604644775390625f').text,'1.0000000000');
 const html = readFileSync('dist/index.html','utf8');

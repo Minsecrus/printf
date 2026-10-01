@@ -76,12 +76,12 @@ export function parseArguments(source) {
 }
 export function highlightFormat(source) {
   const parts = [];
-  const add = (text,part = null) => { if (text) parts.push({text,part}); };
+  const add = (text,part = 'literal') => { if (text) parts.push({text,part}); };
   let index = 0;
   while (index < source.length) {
     const start = source.indexOf('%',index);
     if (start < 0) { add(source.slice(index)); break; }
-    add(source.slice(index,start)); add('%');
+    add(source.slice(index,start)); add('%',null);
     const rest = source.slice(start + 1);
     const match = /^([-+ #0]*)(\*|\d+)?(\.(?:\*|\d*))?(hh|ll|wf\d*|w\d*|[hljztL])?([diubBoxXfFeEgGaAcspn%])?/.exec(rest);
     const [matched, flags, width, precision, length, specifier] = match;
