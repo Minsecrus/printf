@@ -49,13 +49,11 @@ function updateOutput() {
     const result = formatPrintf(formatInput.value,argsInput.value);
     output.textContent = result.text;
     output.hidden = false; errorElement.hidden = true; panel.classList.remove('has-error');
-    document.querySelector('#output-meta').textContent = `${result.bytes} 字节${result.warnings.length ? ' · ' + result.warnings.join('；') : ''}`;
     return result;
   } catch (error) {
     output.textContent = ''; output.hidden = true; errorElement.hidden = false;
     errorElement.textContent = error instanceof FormatError ? error.message : '无法生成输出，请检查输入。';
     panel.classList.add('has-error');
-    document.querySelector('#output-meta').textContent = '等待有效输入';
     (error.field === 'args' ? argsInput : formatInput).setAttribute('aria-invalid','true');
     return {error:errorElement.textContent};
   }
