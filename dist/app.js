@@ -17,9 +17,8 @@ function showSegment(key) {
   document.querySelector('#segment-title').textContent = segment.title;
   document.querySelector('#choices').replaceChildren(...segment.choices.map(([value, description]) => {
     const el = document.createElement('span'); el.className = 'choice';
-    const code = document.createElement('code'); code.textContent = value;
-    const text = document.createElement('span'); text.textContent = description;
-    el.append(code, text); return el;
+    const code = document.createElement('code'); code.textContent = ({'数字':'N','.数字':'.N','省略':'∅'})[value] ?? value;
+    el.append(code); return el;
   }));
 }
 tokens.forEach(token => {
