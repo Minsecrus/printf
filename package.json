@@ -1,1 +1,1 @@
-{"name":"printf-anatomy","private":true,"type":"module","scripts":{"check":"node check.mjs"}}
+{"name":"printf-anatomy","private":true,"type":"module","license":"MIT","scripts":{"check":"node check.mjs"}}

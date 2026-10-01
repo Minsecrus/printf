@@ -159,6 +159,28 @@ function pad(value, width, left, zero = false, prefixLength = 0, byteLength = va
   if (zero) return value.slice(0,prefixLength) + '0'.repeat(fill) + value.slice(prefixLength);
   return ' '.repeat(fill) + value;
 }
+function outputSpans(bytes, convertedBytes) {
+  const spans = [];
+  const characterDecoder = new TextDecoder('utf-8', {ignoreBOM:true});
+  // Match TextDecoder's initial BOM handling without stripping a later BOM.
+  let offset = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf ? 3 : 0;
+  while (offset < bytes.length) {
+    const start = offset, lead = bytes[offset++];
+    const length = lead >= 0xc2 && lead <= 0xdf ? 2 : lead >= 0xe0 && lead <= 0xef ? 3 : lead >= 0xf0 && lead <= 0xf4 ? 4 : 1;
+    for (let index = 1; index < length && offset < bytes.length; index++) {
+      const minimum = index === 1 && lead === 0xe0 ? 0xa0 : index === 1 && lead === 0xf0 ? 0x90 : 0x80;
+      const maximum = index === 1 && lead === 0xed ? 0x9f : index === 1 && lead === 0xf4 ? 0x8f : 0xbf;
+      if (bytes[offset] < minimum || bytes[offset] > maximum) break;
+      offset++;
+    }
+    const text = characterDecoder.decode(bytes.subarray(start,offset));
+    // A character assembled from several origins is colored if any byte was converted.
+    const part = convertedBytes.subarray(start,offset).some(Boolean) ? 'specifier' : 'literal';
+    if (spans.at(-1)?.part === part) spans.at(-1).text += text;
+    else spans.push({text,part});
+  }
+  return spans;
+}
 export function formatPrintf(source, argumentSource) {
   if (source.length > MAX_OUTPUT) throw new FormatError('格式串过长，请控制在 20,000 个字符内。');
   let format = source;
@@ -171,21 +193,22 @@ export function formatPrintf(source, argumentSource) {
   format = Array.from(formatBytes,byte => String.fromCharCode(byte)).join('');
   const argumentsList = parseArguments(argumentSource);
   let argumentIndex = 0, byteCount = 0;
-  const chunks = [], warnings = [], cArguments = [];
+  const chunks = [], chunkParts = [], warnings = [], cArguments = [];
   function consume(kind) {
     if (argumentIndex >= argumentsList.length) throw new FormatError(`缺少第 ${argumentIndex + 1} 个参数，请补充${kind}。`, 'args');
     return argumentsList[argumentIndex++];
   }
-  function push(value) {
+  function push(value, part = 'specifier') {
     const bytes = typeof value === 'string' ? encoder.encode(value) : value;
     byteCount += bytes.length;
     if (byteCount > MAX_OUTPUT) throw new FormatError('输出超过 20,000 字节，请减小宽度或精度。');
     chunks.push(bytes);
+    chunkParts.push(part);
   }
   for (let offset = 0; offset < format.length;) {
     if (format[offset] !== '%') {
       const next = format.indexOf('%', offset); const end = next < 0 ? format.length : next;
-      push(Uint8Array.from(format.slice(offset,end),char => char.charCodeAt(0))); offset = end; continue;
+      push(Uint8Array.from(format.slice(offset,end),char => char.charCodeAt(0)), 'literal'); offset = end; continue;
     }
     if (format[offset + 1] === '%') { push('%'); offset += 2; continue; }
     const match = /^%([-+ #0]*)(\*|\d+)?(?:\.(\*|\d*))?(hh|ll|wf\d+|w\d+|[hljztL])?([diubBoxXfFeEgGaAcspn])/.exec(format.slice(offset));
@@ -263,8 +286,12 @@ export function formatPrintf(source, argumentSource) {
     push(value);
   }
   if (argumentIndex < argumentsList.length) warnings.push(`多出的 ${argumentsList.length - argumentIndex} 个参数未使用`);
-  const allBytes = new Uint8Array(byteCount); let cursor = 0;
-  chunks.forEach(chunk => { allBytes.set(chunk,cursor); cursor += chunk.length; });
+  const allBytes = new Uint8Array(byteCount), convertedBytes = new Uint8Array(byteCount); let cursor = 0;
+  chunks.forEach((chunk,index) => {
+    allBytes.set(chunk,cursor);
+    if (chunkParts[index] === 'specifier') convertedBytes.fill(1,cursor,cursor + chunk.length);
+    cursor += chunk.length;
+  });
   try { new TextDecoder('utf-8',{fatal:true}).decode(allBytes); } catch { warnings.push('输出含不完整的 UTF-8 字节，以 � 显示'); }
-  return {text:decoder.decode(allBytes),bytes:byteCount,used:argumentIndex,total:argumentsList.length,warnings,format:decoder.decode(formatBytes),cArguments};
+  return {text:decoder.decode(allBytes),spans:outputSpans(allBytes,convertedBytes),bytes:byteCount,used:argumentIndex,total:argumentsList.length,warnings,format:decoder.decode(formatBytes),cArguments};
 }

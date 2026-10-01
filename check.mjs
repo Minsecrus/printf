@@ -17,7 +17,11 @@ const cases = [
   ['%s','"a\\0b"','a'],['你好 %d','42','你好 42'],['%#08x','42','0x00002a'],
   ['%#08.0f','3','0000003.'],['%F','inf','INF'],['%s','"<script>alert(1)</script>"','<script>alert(1)</script>']
 ];
-for (const [format,args,expected] of cases) assert.equal(formatPrintf(format,args).text,expected,`${format} / ${args}`);
+for (const [format,args,expected] of cases) {
+  const result = formatPrintf(format,args);
+  assert.equal(result.text,expected,`${format} / ${args}`);
+  assert.equal(result.spans.map(span => span.text).join(''),result.text,'Coloring must preserve the decoded output.');
+}
 for (const [format,args] of [['%d',''],['%d','"x"'],['%s','1'],['%q','1'],['%n','0'],['%p','0'],['%Lf','1'],['%10001d','1'],['%.101f','1'],['%d','42,'],['%s','"unterminated']]) assert.throws(() => formatPrintf(format,args),FormatError);
 assert.equal(formatPrintf('%.1s','"中文"').bytes,1);
 assert.equal(formatPrintf('%s','"\\377"').bytes,1);
@@ -26,6 +30,19 @@ assert.deepEqual(highlightFormat('%+08.2lld'),[{text:'%',part:null},{text:'+0',p
 assert.deepEqual(highlightFormat('hello %d'),[{text:'hello ',part:'literal'},{text:'%',part:null},{text:'d',part:'specifier'}]);
 for (const value of ['hello %d / %s','%','%+08.','%*.*f','%wf16u','%%','"中文 %s"']) assert.equal(highlightFormat(value).map(part => part.text).join(''),value);
 assert.equal(formatPrintf('%.10f','1.000000059604644775390625f').text,'1.0000000000');
+assert.deepEqual(formatPrintf('value: %+08.2f','3.14159').spans,[{text:'value: ',part:'literal'},{text:'+0003.14',part:'specifier'}]);
+assert.deepEqual(formatPrintf('A%%B','').spans,[{text:'A',part:'literal'},{text:'%',part:'specifier'},{text:'B',part:'literal'}]);
+assert.deepEqual(formatPrintf('%.1sX','"é"').spans,[{text:'�',part:'specifier'},{text:'X',part:'literal'}]);
+assert.deepEqual(formatPrintf('\\xC3%d','7').spans,[{text:'�',part:'literal'},{text:'7',part:'specifier'}]);
+for (const [format,args,expected] of [
+  ['%c%c','195, 169','é'],['%c\\xA9','195','é'],['\\xC3%c','169','é'],
+  ['\\xC3%.0d','0','�'],['\\uFEFF%s','"X"','X'],['A%sb','"\\uFEFF"','A\uFEFFb'],
+  ['%c%c%c','226, 130, 172','€'],['%c%c%c%c','240, 159, 152, 128','😀']
+]) {
+  const result = formatPrintf(format,args);
+  assert.equal(result.text,expected);
+  assert.equal(result.spans.map(span => span.text).join(''),expected);
+}
 const html = readFileSync('dist/index.html','utf8');
 for (const ref of html.matchAll(/(?:src|href)="\.\/([^"?#]+)"/g)) assert(existsSync(`dist/${ref[1]}`),`missing asset ${ref[1]}`);
 console.log(`${cases.length} formatting cases, error paths, byte semantics and local asset references passed.`);

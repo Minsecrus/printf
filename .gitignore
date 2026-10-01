@@ -1,0 +1,4 @@
+node_modules/
+.openai/
+.sites-runtime/
+*.log
