@@ -48,3 +48,4 @@ footer{display:grid;justify-items:end}
 @media(max-width:1100px) and (min-width:601px){.anatomy{grid-template-rows:112px 210px}}
 @media(max-width:600px){.anatomy{grid-template-rows:154px 155px}}
 #output [data-part="specifier"]{color:#f18d87}#output [data-part="literal"]{color:#b6b8ba}
+#output [data-part="count"]::after{content:attr(data-value);margin:0 .12em;font-size:.42em;vertical-align:super;color:#f18d87;opacity:.75}

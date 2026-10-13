@@ -29,7 +29,10 @@ const segments = {
     ['t', '有符号转换使用 ptrdiff_t；无符号转换使用其对应的无符号类型。常用于输出指针差值。'],
     ['wN', 'N 指定整数位宽，例如 w32 表示 32 位整数。C23 新增，可用位宽由实现决定。'],
     ['wfN', '使用至少 N 位且适合快速运算的整数类型，实际位宽由平台决定。C23 新增。'],
-    ['L', '浮点转换使用 long double，精度由平台决定。']
+    ['L', '浮点转换使用 long double，精度由平台决定。'],
+    ['H', '浮点转换使用 _Decimal32 十进制浮点类型。C23 新增，属于可选支持。'],
+    ['D', '浮点转换使用 _Decimal64 十进制浮点类型。C23 新增，属于可选支持。'],
+    ['DD', '浮点转换使用 _Decimal128 十进制浮点类型。C23 新增，属于可选支持。']
   ] },
   specifier: { title: '说明符', choices: [
     ['d / i', '以有符号十进制输出整数。printf 中 d 与 i 的输出行为相同。'],
@@ -40,7 +43,7 @@ const segments = {
     ['f / F', '以普通小数形式输出浮点数，精度控制小数位数。F 使用大写 INF/NAN。'],
     ['e / E', '以科学计数法输出浮点数，如 1.23e+04。精度控制小数位数，指数至少包含两位数字。'],
     ['g / G', '根据数值与有效位数选择普通小数或科学计数法。默认删除小数部分的末尾零，# 可以保留。'],
-    ['a / A', '以十六进制形式输出浮点数，如 0x1.8p+0。p/P 后是以 2 为底的指数，精度控制十六进制小数位数。'],
+    ['a / A', '以十六进制形式输出浮点数，如 0x1.8p+0。p/P 后是以 2 为底的指数，精度控制十六进制小数位数。十进制浮点类型按系数和量子指数输出，如 1.23e+3。'],
     ['c', '将 int 参数转换为 unsigned char，输出一个字节。支持宽度与左对齐，不使用精度。'],
     ['s', '输出字符串，遇到结尾的空字符停止。精度限制最多输出的字节数，可能截断 UTF-8 字符。'],
     ['p', '输出指针地址，具体表示形式由 C 实现决定。'],
@@ -135,8 +138,9 @@ function updateOutput() {
   formatInput.removeAttribute('aria-invalid'); argsInput.removeAttribute('aria-invalid');
   try {
     const result = formatPrintf(formatInput.value,argsInput.value);
-    output.replaceChildren(...result.spans.map(({text,part}) => {
+    output.replaceChildren(...result.spans.map(({text,part,value}) => {
       const span = document.createElement('span'); span.textContent = text; span.dataset.part = part;
+      if (value !== undefined) span.dataset.value = value;
       return span;
     }));
     output.hidden = false; errorElement.hidden = true; panel.classList.remove('has-error');
@@ -164,7 +168,7 @@ if (document.modelContext?.registerTool) {
     if (!input || typeof input.format !== 'string' || typeof input.arguments !== 'string' || input.format.length > 20000 || input.arguments.length > 20000 || Object.keys(input).some(key => !['format','arguments'].includes(key))) throw new Error('需要 format 和 arguments 两个字符串。');
     formatInput.value = input.format; argsInput.value = input.arguments;
     const result = updateOutput();
-    return result.error ? {error:result.error} : {output:result.text,bytes:result.bytes,warnings:result.warnings};
+    return result.error ? {error:result.error} : {output:result.text};
   }});
   window.addEventListener('pagehide',() => lifecycle.abort(),{once:true});
 }
