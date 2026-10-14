@@ -240,7 +240,7 @@ function parseArguments(source) {
     if (token.text === '+' || token.text === '-') return arithmetic(token.text,unary());
     if (token.text === '&') {
       const name = tokens[index++];
-      if (name?.kind !== 'identifier' || Object.hasOwn(constants,name.text) || isTypeName(name)) argumentError('& 后面需要变量名。');
+      if (name?.kind !== 'identifier' || Object.hasOwn(constants,name.text) || isTypeName(name)) argumentError('& 后面需要对象名。');
       return {type:{kind:'pointer',name:`typeof(${name.text}) *`,to:null},address:null,object:name.text};
     }
     if (token.text === '(') {

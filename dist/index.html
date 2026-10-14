@@ -35,7 +35,7 @@
         <form id="printf-form" autocomplete="off">
           <div class="inputs">
             <div class="field format-field"><label for="format-input">格式化串</label><div class="input-shell"><span class="input-quote" aria-hidden="true">“</span><div class="format-editor"><div class="input-highlight" aria-hidden="true"><span id="format-highlight"></span></div><input id="format-input" value="%+08.2f" placeholder="%d, %s" spellcheck="false"></div><span class="input-quote" aria-hidden="true">”</span></div></div>
-            <div class="field"><label for="args-input">参数</label><div class="input-shell"><input id="args-input" value="3.14159" placeholder="42, &quot;hello&quot;" title="多个参数用逗号分隔，字符串加双引号" spellcheck="false"></div></div>
+            <div class="field"><label for="args-input">参数</label><div class="input-shell"><input id="args-input" value="3.14159" placeholder="42, &quot;hello&quot;" title="多个参数用逗号分隔，字符串加双引号；nullptr、0b101、1'000 等写法需要 C23" spellcheck="false"></div></div>
           </div>
         </form>
         <div class="output-panel" id="output-panel" aria-label="格式化结果"><pre id="output" aria-live="polite" aria-atomic="true">+0003.14</pre><p class="output-error" id="output-error" role="status" hidden></p></div>

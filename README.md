@@ -5,7 +5,7 @@
 - 分解 `%[FF][WW][.PP][LL]SS`，悬停查看替换规则和解释。
 - 格式化串按语法部分着色，输出区区分普通文本和格式化结果。
 - 输入格式化串与参数，实时显示结果。
-- 参数按 C 表达式求值：常量、字符串字面量、类型转换、`NULL`、`nullptr`、`INFINITY`、`NAN` 和 `&变量`。`%n` 写入的值标在输出的对应位置。
+- 参数按 C 表达式求值：常量、字符串字面量、类型转换、`NULL`、`nullptr`、`INFINITY`、`NAN` 和 `&对象`。`%n` 写入的值标在输出的对应位置。其中 `nullptr`、`0b` 前缀、数字分隔符 `'`、`u8` 字符常量、`wb` 后缀和十进制浮点常量是 C23 新增的写法。
 
 在线访问：[minsecrus.github.io/printf](https://minsecrus.github.io/printf/)
 
