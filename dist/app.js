@@ -112,20 +112,35 @@ function showSegment(key) {
     el.append(code); return el;
   }));
 }
+function activate(token) {
+  active = token.dataset.segment;
+  tokens.forEach(el => { el.classList.toggle('is-active', el === token); el.setAttribute('aria-pressed', String(el === token)); });
+  showSegment(active);
+  syncReset();
+}
 tokens.forEach(token => {
   token.addEventListener('pointerenter', event => { if (event.pointerType !== 'touch') { showSegment(token.dataset.segment); token.classList.add('is-preview'); } });
   token.addEventListener('pointerleave', () => { token.classList.remove('is-preview'); showSegment(active); });
   token.addEventListener('focus', () => showSegment(token.dataset.segment));
   token.addEventListener('blur', () => showSegment(active));
-  token.addEventListener('click', () => {
-    active = token.dataset.segment;
-    tokens.forEach(el => { el.classList.toggle('is-active', el === token); el.setAttribute('aria-pressed', String(el === token)); });
-    showSegment(active);
-  });
+  token.addEventListener('click', () => activate(token));
 });
 showSegment(active);
-document.querySelector('#printf-form').addEventListener('submit', event => event.preventDefault());
+const form = document.querySelector('#printf-form');
+form.addEventListener('submit', event => event.preventDefault());
+// The defaults are the inputs' value attributes and the token marked active in the HTML.
+const defaultToken = tokens.find(token => token.classList.contains('is-active'));
+const resetButton = document.querySelector('#reset');
+function syncReset() { resetButton.disabled = active === defaultToken.dataset.segment && [formatInput,argsInput].every(input => input.value === input.defaultValue); }
+resetButton.addEventListener('click', () => {
+  form.reset();
+  hideRuleTooltip();
+  activate(defaultToken);
+  updateOutput();
+  resetButton.classList.remove('is-spinning'); void resetButton.offsetWidth; resetButton.classList.add('is-spinning');
+});
 function updateOutput() {
+  syncReset();
   highlight.replaceChildren(...highlightFormat(formatInput.value).map(({text,part}) => {
     const span = document.createElement('span'); span.textContent = text;
     if (part) { span.dataset.part = part; span.style.color = `var(--${part})`; }
